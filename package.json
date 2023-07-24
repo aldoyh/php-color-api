@@ -10,7 +10,8 @@
     "start": "DB_HOST=localhost:3306 DB_USERNAME=root DB_PASSWORD=frontify php -S localhost:8080 -t public/",
     "test": "php ./vendor/bin/phpunit --colors=always tests/",
     "docker:build": "docker build -t color-api .   ",
-    "docker:run": "docker compose up -d"
+    "docker:run": "docker compose up -d",
+    "docker:stop": "docker compose down"
   },
   "author": "",
   "license": "UNLICENSED",
