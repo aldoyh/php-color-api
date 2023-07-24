@@ -1,45 +1,84 @@
-# Frontify Color API
+# Running the project
 
-Hello there! 👋
+Start the Database:
+````
+yarn docker:db
+````
+Start the Backend Service:
+````
+yarn start
+````
 
-This task aims to show us where you stand as a developer, what your coding style is, and to have a basis for discussion.
+# Approch for Solution
+## Usage of GraphQL 
+In the discussion with Marc, a big part of our discussion was designing optimized GraphQL APIs. He told me that this is what frontify is using for the majority of their APis and there are only very few REST APIs left wich are not yet migrated. 
 
-For this purpose, create a simple and elegant RESTful API server for creating, reading, updating, and/or deleting 
-operations on a Color entity. A Color should have a name and a HEX value. Pick one or more operations for a simple 
-workflow to show how well and properly you engineer solutions, even for simple problems. Do it as well as you would 
-expect for a code review by yourself. Work on top of the existing skeleton and Git history.
+After looking at this provided PHP backend project i noticed that it was targeted towards developing a REST API.
+After asking Tom about it, he mentioned that this is part of the reason why the task template is being revamped and that i should simply document all my changes.
 
-Keep in mind, we need a basis for discussion, not a fully-fledged enterprise solution. It's fine when features aren't 
-implemented completely. Spend at most a few hours.
+Because of that, I decided to rewrite the backend code to utilize GraphQL instead of REST. This allows for the code to be aligned with the current frontify tech stack.
+It gives me the possibility to show cool graphql features on the frontend side of things.
 
-## Rules of the Game
+## Library
+I used the [HTTP / GraphQL Library ](https://github.com/webonyx/graphql-php) Library for the GraphQL Spec implementation. Because of the scope of this little project, i decided not to reinvent the wheel 🤣
 
-- Don't use any further library or framework.
-- You have to write the code — no code generators or assistants allowed (e.g., GitHub Copilot).
-- Feel free to change existing code (or fix existing problems) as you see fit.
-- Don't share the code publicly; just send it back to us.
-- **Enjoy!**
+## Structure
 
-## Skeleton Setup
+I decided to keep this very simple and basic and use some more time for the frontend implementation. This code still has lots of room for improvement.
 
-**Requirements:** PHP 7.3+, node.js (optional, format the code manually if you don't use Prettier).
+### Server 
 
-We use [http-server-request](https://github.com/sunrise-php/http-server-request) to abstract PHP's `$_SERVER`
-and `$_REQUEST` superglobals, [Prettier for PHP](https://github.com/prettier/plugin-php) for code-formatting
-and [PHPUnit](https://phpunit.de/) for testing:
+I'm using the StandardServer from the GraphQL Lib to serve GET AND POST requests. I'm using a manual catch for option requests wich are required to be returned for graphql to work properly. This can defenitely be improvent with a proper HTTP handling.
 
-```shell
-npm i && php composer.phar install
-```
+### Schema
+#### Object Types
+##### Color
 
-Run PHP's built-in server available at [localhost:8080](http://localhost:8080):
-
-```shell
-npm start
-```
-
-Execute the PHPUnit tests via NPM shortcut:
-
-```shell
-npm test
-```
+````
+type Color {
+    id: Int
+    name: String
+    value: String
+}
+````
+##### Success
+This Object can later be extended to provide more information about the success or error of the mutation
+````
+type Success {
+    success: Boolean
+}
+````
+#### Queries
+##### colors
+````
+colors(limit: Int): [Color]
+````
+##### color
+````
+color(limit: Int, offfset: Int ): Color
+````
+#### Mutations
+##### addColor
+````
+addColor(name: String, value: String): Color
+````
+##### updateColor
+````
+updateColor(id: Int, name: String, value: String): Color
+````
+##### deleteColor
+````
+deleteColor(id: Int): Success
+````
+## Database
+I decided to use a simple mysql database for this project. I created a docker-compose file wich can be used to start the database. The database is exposed on port 3306 and can be accessed with the following credentials:
+````
+database: colors
+user: root
+password: frontify
+````
+### Database Connection
+I used the MySQLi PHP extension to connect to the database. 
+Some of the Queries are not yet prepared statements. This is something that needs be rewritten before this code can be used in production.
+## Tests
+I invested more time in the frontend implementation and therefore did not yet write tests in the backend.

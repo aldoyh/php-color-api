@@ -2,14 +2,22 @@
 
 /* (c) Copyright Frontify Ltd., all rights reserved. */
 
-use Frontify\ColorApi\ColorEndpoint;
-use Sunrise\Http\ServerRequest\ServerRequestFactory;
+use GraphQL\Server\StandardServer;
 
 require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../src/schema.php';
 
-$request = ServerRequestFactory::fromGlobals();
-$endpoint = new ColorEndpoint();
+header("Access-Control-Allow-Origin: *");   
+header("Content-Type: application/json; charset=UTF-8");   
+header("Access-Control-Allow-Methods: POST, GET");    
+header("Access-Control-Max-Age: 3600");    
+header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With"); 
 
-header('Content-Type: application/json');
-
-echo json_encode($endpoint->handle($request), JSON_THROW_ON_ERROR);
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    return 0;
+} else {
+    $server = new StandardServer([
+        'schema' => $schema,
+    ]);
+    $server->handleRequest();
+}

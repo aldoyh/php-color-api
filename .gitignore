@@ -8,5 +8,6 @@
 !.vscode/launch.example.json
 /node_modules/
 vendor/*
+db-data/*
 npm-debug.log
 .phpunit.result.cache
