@@ -3,6 +3,8 @@
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type;
 
+use function Frontify\ColorApi\sql;
+
 require_once __DIR__ . '/../src/color.php';
 
 $successType = new ObjectType([
@@ -27,8 +29,8 @@ $mutationType = new ObjectType([
                     return null;
                 }
                 //Needs to be rewritten as aprepared statement for production
-                $insert = sql("INSERT INTO colors (name, value) VALUES ('" . $args['name'] . "', '" . $args['value'] . "')"); 
-                
+                $insert = sql("INSERT INTO colors (name, value) VALUES ('" . $args['name'] . "', '" . $args['value'] . "')");
+
                 $colors = sql("SELECT * FROM colors WHERE id = '" . $insert["id"] . "'");
                 if (count($colors['data']) === 0) {
                     return null;

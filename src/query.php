@@ -5,7 +5,8 @@ use GraphQL\Type\Definition\Type;
 
 require_once __DIR__ . '/color.php';
 
-$MyDB = new mysqli(getenv('DB_HOST') != false ? getenv('DB_HOST') : null, getenv('DB_USERNAME'), getenv('DB_PASSWORD'), "colors", getenv('DB_PORT') != false ? getenv('DB_PORT') : null, getenv('DB_SOCKET') != false ? getenv('DB_SOCKET') : null);
+// $MyDB = new mysqli(getenv('DB_HOST') != false ? getenv('DB_HOST') : null, getenv('DB_USERNAME'), getenv('DB_PASSWORD'), "colors", getenv('DB_PORT') != false ? getenv('DB_PORT') : null, getenv('DB_SOCKET') != false ? getenv('DB_SOCKET') : null);
+$conn = new mysqli("127.0.0.1", "root", "", "colorsdb", 3306);
 
 if ($MyDB->connect_errno) {
     error_log("Failed to connect to MySQL: (" . $MyDB->connect_errno . ") " . $MyDB->connect_error);
@@ -37,7 +38,7 @@ $queryType = new ObjectType([
             ],
             'resolve' => function ($rootValue, array $args, $context) {
                 global $MyDB;
-                
+
                 if (array_key_exists('offset', $args) && array_key_exists('limit', $args)) {
                     $stmt = $MyDB->prepare("SELECT * FROM colors ORDER BY id DESC LIMIT ? OFFSET ?");
                     $stmt->bind_param("ii", $args["limit"] , $args['offset']);
@@ -67,7 +68,7 @@ $queryType = new ObjectType([
                     $result = $stmt->get_result();
                     $rows = $result->fetch_all(MYSQLI_ASSOC);
                     return $rows;
-                
+
             }
         ]
     ],
