@@ -7,20 +7,68 @@ namespace Frontify\ColorApi;
 use GraphQL\Type\Schema;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type;
+use mysqli;
+
+// Database configuration
+const DB_CONFIG = [
+    'host' => '127.0.0.1',
+    'username' => 'root',
+    'password' => '',
+    'database' => 'colorsdb',
+    'port' => 3306
+];
+
+$conn = new mysqli(
+    DB_CONFIG['host'],
+    DB_CONFIG['username'],
+    DB_CONFIG['password']
+);
+
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+
+$sql = "CREATE DATABASE IF NOT EXISTS colorsdb";
+
+if ($conn->query($sql) === true) {
+    error_log("Database created successfully");
+} else {
+    echo "Error creating database: " . $conn->error;
+}
+
+// Create colors table if not exists
+$sql = "CREATE TABLE IF NOT EXISTS colorsdb.colors (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    hex VARCHAR(7) NOT NULL,
+    rgb VARCHAR(20),
+    created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)";
+
+if ($conn->query($sql) !== true) {
+    die("Error creating table: " . $conn->error);
+}
 
 require_once __DIR__ . '/query.php';
 require_once __DIR__ . '/mutation.php';
 
 function sql($query)
 {
-    // $conn = new mysqli(getenv('DB_HOST') != false ? getenv('DB_HOST') : null, getenv('DB_USERNAME'), getenv('DB_PASSWORD'), "colors", getenv('DB_PORT') != false ? getenv('DB_PORT') : null, getenv('DB_SOCKET') != false ? getenv('DB_SOCKET') : null);
     $conn = new \mysqli(
-        "localhost",
-        "root",
-        "",
-        "colorsdb",
-        3306
+        DB_CONFIG['host'],
+        DB_CONFIG['username'],
+        DB_CONFIG['password'],
+        DB_CONFIG['database'],
+        DB_CONFIG['port']
     );
+
+    if ($conn->connect_error) {
+        return [
+            'success' => false,
+            'error' => $conn->connect_error
+        ];
+    }
+
     $result = $conn->query($query);
     if ($result === true) {
         $affected_rows = $conn->affected_rows;
@@ -48,3 +96,5 @@ $schema = new Schema([
     'mutation' => $mutationType,
     'debug' => true,
 ]);
+
+return $schema;

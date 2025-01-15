@@ -1,0 +1,28 @@
+{
+    "status": 200,
+    "statusText": "OK",
+    "message": "All css colors retrieved.",
+    "count": 148,
+    "colors": [
+        {
+            "name": "Ocean Blue",
+            "hex": "#2196f3"
+        },
+        {
+            "name": "Coral Red",
+            "hex": "#ff5252"
+        },
+        {
+            "name": "Forest Green",
+            "hex": "#4caf50"
+        },
+        {
+            "name": "Royal Purple",
+            "hex": "#9c27b0"
+        },
+        {
+            "name": "Sunset Orange",
+            "hex": "#ff9800"
+        }
+    ]
+}

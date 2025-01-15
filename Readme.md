@@ -10,8 +10,8 @@ yarn start
 ````
 
 # Approch for Solution
-## Usage of GraphQL 
-In the discussion with Marc, a big part of our discussion was designing optimized GraphQL APIs. He told me that this is what frontify is using for the majority of their APis and there are only very few REST APIs left wich are not yet migrated. 
+## Usage of GraphQL
+In the discussion with Marc, a big part of our discussion was designing optimized GraphQL APIs. He told me that this is what frontify is using for the majority of their APis and there are only very few REST APIs left wich are not yet migrated.
 
 After looking at this provided PHP backend project i noticed that it was targeted towards developing a REST API.
 After asking Tom about it, he mentioned that this is part of the reason why the task template is being revamped and that i should simply document all my changes.
@@ -26,7 +26,7 @@ I used the [HTTP / GraphQL Library ](https://github.com/webonyx/graphql-php) Lib
 
 I decided to keep this very simple and basic and use some more time for the frontend implementation. This code still has lots of room for improvement.
 
-### Server 
+### Server
 
 I'm using the StandardServer from the GraphQL Lib to serve GET AND POST requests. I'm using a manual catch for option requests wich are required to be returned for graphql to work properly. This can defenitely be improvent with a proper HTTP handling.
 
@@ -78,7 +78,7 @@ user: root
 password: frontify
 ````
 ### Database Connection
-I used the MySQLi PHP extension to connect to the database. 
+I used the MySQLi PHP extension to connect to the database.
 Some of the Queries are not yet prepared statements. This is something that needs be rewritten before this code can be used in production.
 ## Tests
 I invested more time in the frontend implementation and therefore did not yet write tests in the backend.
