@@ -33,6 +33,21 @@
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 1rem;
             margin: 2rem 0;
+            transform: rotateX(15deg);
+            animation: scroll-animation 90s linear infinite;
+        }
+
+        .color-grid:nth-child(2) {
+            animation-duration: 60s;
+        }
+
+        .color-grid:nth-child(3) {
+            animation-duration: 30s;
+        }
+
+        @keyframes scroll-animation {
+            0% { transform: translateY(100%) rotateX(15deg); }
+            100% { transform: translateY(-100%) rotateX(15deg); }
         }
 
         .color-box {
@@ -98,25 +113,88 @@
         .generate-btn:hover {
             background-color: #2980b9;
         }
+
+        .parallax-wrapper {
+            height: 100vh;
+            overflow-x: hidden;
+            overflow-y: auto;
+            perspective: 10px;
+        }
+
+        .parallax-content {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            transform-style: preserve-3d;
+            z-index: -1;
+        }
+
+        .scroll-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+        }
+
+        .scroll-container[data-speed="slow"] {
+            transform: translateZ(2px) scale(0.8);
+        }
+
+        .scroll-container[data-speed="medium"] {
+            transform: translateZ(5px) scale(0.5);
+        }
+
+        .scroll-container[data-speed="fast"] {
+            transform: translateZ(9px) scale(0.2);
+        }
+
+        .content {
+            position: relative;
+            background: rgba(0, 34, 17, 0.8);
+            padding: 2rem;
+            border-radius: 1rem;
+            z-index: 1;
+            backdrop-filter: blur(5px);
+            margin: 2rem auto;
+            max-width: 800px;
+        }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Flip.min.js"></script>
 </head>
 
 <body>
-    <div class="container">
-        <h1>Color Theme Generator</h1>
-        <p>Create beautiful color palettes for your next project</p>
+    <div class="parallax-wrapper">
+        <div class="parallax-content">
+            <div class="scroll-container" data-speed="slow">
+                <div class="color-grid">{{colors}}</div>
+            </div>
+            <div class="scroll-container" data-speed="medium">
+                <div class="color-grid">{{colors}}</div>
+            </div>
+            <div class="scroll-container" data-speed="fast">
+                <div class="color-grid">{{colors}}</div>
+            </div>
 
-        <button class="generate-btn" onclick="generateNewTheme()">
-            Generate New Theme
-        </button>
-
-        <h1>Colors</h1>
-        <div class="color-grid" id="colorGrid">
-            {{colors}}
+            <div class="content">
+                <h1>Color Theme Generator</h1>
+                <p>Create beautiful color palettes for your next project</p>
+                <button class="generate-btn" onclick="generateNewTheme()">
+                    Generate New Theme
+                </button>
+                <div class="color-grid" id="colorGrid">
+                    {{colors}}
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
+            // Register Flip plugin
+            gsap.registerPlugin(Flip);
+
         async function generateNewTheme() {
             const query = `
                 mutation GenerateTheme {
@@ -156,16 +234,52 @@
 
         // rearrange the color boxes every 7 seconds
         function scramble() {
-            const grid = document.getElementById('colorGrid');
-            const boxes = Array.from(grid.children);
-            boxes.forEach(box => {
-                const randomX = Math.floor(Math.random() * 100);
-                const randomY = Math.floor(Math.random() * 100);
-                box.style.transform = `translate(${randomX}px, ${randomY}px)`;
-            });
+            try {
+                const grid = document.getElementById('colorGrid');
+
+                const boxes = Array.from(grid.children);
+
+                if (!boxes.length) return; // Guard clause if no boxes exist
+
+                // Simpler Flip implementation
+                const state = Flip.getState(boxes, {
+                    props: "all"
+                });
+
+                boxes.sort(() => Math.random() - 0.5);
+                boxes.forEach(box => grid.appendChild(box));
+
+                Flip.from(state, {
+                    yoyo: true,
+                    repeat: -1,
+                    repeatDelay: 3,
+                    duration: 0.7,
+                    ease: "power1.inOut",
+                    stagger: 0.02,
+                    absolute: true,
+                    onComplete: () => console.log('Flip complete')
+                });
+            } catch (error) {
+                console.error('Scramble animation error:', error);
+            }
         }
 
+            // Initialize after everything is loaded
+            window.addEventListener('load', () => {
+                scramble();
+            });
 
+        // Add parallax effect on scroll
+        document.querySelector('.parallax-wrapper').addEventListener('scroll', () => {
+            requestAnimationFrame(() => {
+                const scrolled = document.querySelector('.parallax-wrapper').scrollTop;
+                document.querySelectorAll('.scroll-container').forEach(container => {
+                    const speed = container.dataset.speed;
+                    const yPos = scrolled * (speed === 'slow' ? 0.7 : speed === 'medium' ? 0.5 : 0.3);
+                    container.style.transform = `translateY(${yPos}px) scale(${speed === 'slow' ? 0.8 : speed === 'medium' ? 0.5 : 0.2})`;
+                });
+            });
+        });
     </script>
 </body>
 
