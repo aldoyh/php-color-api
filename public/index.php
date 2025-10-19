@@ -9,10 +9,17 @@ require_once __DIR__ . '/../src/schema.php';
 // Handle CORS
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit(0);
+}
+
+// GraphiQL for local development
+if (parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) === '/graphiql') {
+    header('Content-Type: text/html');
+    echo file_get_contents(__DIR__ . '/../templates/graphiql.html');
+    exit;
 }
 
 // GraphQL endpoint
@@ -22,28 +29,24 @@ if (parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) === '/graphql') {
     try {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $rawInput = file_get_contents('php://input');
-            if (!$rawInput) {
-                throw new Exception('Missing POST data');
-            }
-            $input = json_decode($rawInput, true);
-            if (json_last_error() !== JSON_ERROR_NONE) {
+            $input = $rawInput ? json_decode($rawInput, true) : null;
+            if ($rawInput && json_last_error() !== JSON_ERROR_NONE) {
                 throw new Exception('Invalid JSON');
+            }
+            // If no JSON body, fall back to $_POST
+            if ($input === null) {
+                $input = $_POST;
             }
         } else {
             $input = $_GET;
-        }
-
-        $query = $input['query'] ?? null;
-        if (!$query) {
-            throw new Exception('Missing query');
         }
 
         $config = ServerConfig::create()
             ->setSchema($schema)
             ->setDebugFlag(1); // Changed from true to 1
 
-        $server = new StandardServer($config);
-        $server->handleRequest(GraphQL\Server\OperationParams::create($input));
+    $server = new StandardServer($config);
+    $server->handleRequest(GraphQL\Server\OperationParams::create($input ?? []));
     } catch (Exception $e) {
         http_response_code(400);
         echo json_encode([

@@ -23,4 +23,11 @@ while true; do
   fi
 done
 
+# Install dependencies if vendor not present
+if [ ! -d "vendor" ] || [ ! -f "vendor/autoload.php" ]; then
+  echo 'Vendor folder missing, running composer install...'
+  composer install --no-interaction --prefer-dist
+fi
+
+echo "Starting PHP built-in server on http://localhost:$port"
 php -S localhost:$port -t public public/index.php

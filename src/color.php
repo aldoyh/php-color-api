@@ -9,10 +9,9 @@ use GraphQL\Type\Definition\Type;
 $colorType = new ObjectType([
     'name' => 'Color',
     'fields' => [
-        'id' => Type::id(),
-        'name' => Type::string(),
-        'hex' => Type::string(),
-        'rgb' => Type::string(),
-        'created' => Type::string()
+        'hex' => Type::nonNull(Type::string()),
+        'rgb' => Type::nonNull(Type::string()),
+        'hsl' => Type::nonNull(Type::string()),
+        'name' => Type::string()
     ],
 ]);

@@ -1,12 +1,21 @@
+yarn docker:db
+yarn start
 # Running the project
 
-Start the Database:
+Start the Database (optional — the app uses SQLite by default):
 ````
 yarn docker:db
 ````
+
 Start the Backend Service:
 ````
-yarn start
+composer install
+./run.sh
+````
+
+Or run the server with a MySQL backend:
+````
+DB_DRIVER=mysql DB_HOST=127.0.0.1 DB_PORT=3306 DB_DATABASE=colors DB_USERNAME=root DB_PASSWORD=frontify yarn start
 ````
 
 # Approch for Solution
@@ -70,15 +79,14 @@ updateColor(id: Int, name: String, value: String): Color
 ````
 deleteColor(id: Int): Success
 ````
-## Database
-I decided to use a simple mysql database for this project. I created a docker-compose file wich can be used to start the database. The database is exposed on port 3306 and can be accessed with the following credentials:
-````
 database: colors
-user: root
-password: frontify
-````
-### Database Connection
-I used the MySQLi PHP extension to connect to the database.
-Some of the Queries are not yet prepared statements. This is something that needs be rewritten before this code can be used in production.
+## Database
+The project now uses a PDO-backed helper (`src/Database.php`). By default the app uses an embedded SQLite database stored at `data/colors.db`. For production or integration testing you may switch to MySQL/MariaDB by setting the environment variables `DB_DRIVER=mysql`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, and `DB_PASSWORD`.
+
+Migrations and seeding are performed automatically at startup via `Database::runMigrations()` — the code will seed from `colors.json` when present and fall back to a small default set.
 ## Tests
-I invested more time in the frontend implementation and therefore did not yet write tests in the backend.
+Lightweight unit tests were added for the color utilities. Run the test suite with:
+
+````
+php ./vendor/bin/phpunit --colors=always tests/
+````

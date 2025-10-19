@@ -7,87 +7,66 @@ namespace Frontify\ColorApi;
 use GraphQL\Type\Schema;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type;
-use mysqli;
 
-// Database configuration
-const DB_CONFIG = [
-    'host' => '127.0.0.1',
-    'username' => 'root',
-    'password' => '',
-    'database' => 'colorsdb',
-    'port' => 3306
-];
+// Use PDO-based Database helper (migrations + seeding handled there)
+require_once __DIR__ . '/Database.php';
 
-$conn = new mysqli(
-    DB_CONFIG['host'],
-    DB_CONFIG['username'],
-    DB_CONFIG['password']
-);
-
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-
-$sql = "CREATE DATABASE IF NOT EXISTS colorsdb";
-
-if ($conn->query($sql) === true) {
-    error_log("Database created successfully");
-} else {
-    echo "Error creating database: " . $conn->error;
-}
-
-// Create colors table if not exists
-$sql = "CREATE TABLE IF NOT EXISTS colorsdb.colors (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    hex VARCHAR(7) NOT NULL,
-    rgb VARCHAR(20),
-    created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)";
-
-if ($conn->query($sql) !== true) {
-    die("Error creating table: " . $conn->error);
-}
+// Run migrations and seed default colors (no-op if DB already initialized)
+\Frontify\ColorApi\Database::runMigrations();
 
 require_once __DIR__ . '/query.php';
 require_once __DIR__ . '/mutation.php';
 
-function sql($query)
-{
-    $conn = new \mysqli(
-        DB_CONFIG['host'],
-        DB_CONFIG['username'],
-        DB_CONFIG['password'],
-        DB_CONFIG['database'],
-        DB_CONFIG['port']
-    );
+/**
+ * Compatibility wrapper used by existing code. Returns a PDO instance.
+ */
+function getDatabase() {
+    static $pdo = null;
 
-    if ($conn->connect_error) {
-        return [
-            'success' => false,
-            'error' => $conn->connect_error
-        ];
+    if ($pdo === null) {
+        $pdo = \Frontify\ColorApi\Database::getConnection();
     }
 
-    $result = $conn->query($query);
-    if ($result === true) {
-        $affected_rows = $conn->affected_rows;
-        $last_id = $conn->insert_id;
-        $conn->close();
-        return [
-            'success' => $affected_rows > 0,
-            'id' => $last_id,
-        ];
-    } elseif ($result->num_rows > 0) {
-        $data = $result->fetch_assoc();
-        return [
-            'success' => true,
-            'data' => $data,
-        ];
-    } else {
-        return [
-            'success' => false,
-        ];
+    return $pdo;
+}
+
+function sql($query, $params = []) {
+    try {
+        $pdo = getDatabase();
+
+        if (empty($params)) {
+            $stmt = $pdo->query($query);
+            if ($stmt === false) {
+                return ['success' => false, 'error' => 'Query failed'];
+            }
+
+            $data = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            return ['success' => true, 'data' => $data];
+        }
+
+        $stmt = $pdo->prepare($query);
+        if ($stmt === false) {
+            return ['success' => false, 'error' => 'Failed to prepare statement'];
+        }
+
+        foreach ($params as $key => $value) {
+            $paramType = is_int($value) ? \PDO::PARAM_INT : \PDO::PARAM_STR;
+            $stmt->bindValue($key, $value, $paramType);
+        }
+
+        $executed = $stmt->execute();
+        if (!$executed) {
+            return ['success' => false, 'error' => implode(' ', $stmt->errorInfo())];
+        }
+
+        $resultData = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        if ($resultData) {
+            return ['success' => true, 'data' => $resultData];
+        }
+
+        return ['success' => true, 'id' => $pdo->lastInsertId(), 'changes' => $stmt->rowCount()];
+    } catch (\Throwable $e) {
+        return ['success' => false, 'error' => $e->getMessage()];
     }
 }
 

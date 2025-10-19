@@ -11,3 +11,5 @@ vendor/*
 db-data/*
 npm-debug.log
 .phpunit.result.cache
+data/*.db
+data/*.db-journal

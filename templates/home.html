@@ -4,282 +4,356 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Color Theme Generator</title>
+    <title>Color API - Advanced Color Palette Generator</title>
     <style>
-        body {
-            font-family: 'Segoe UI', sans-serif;
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            background: #002211;
-            color: #e9e8ff;
+            padding: 2rem;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 2rem;
-            text-align: center;
         }
 
-        h1 {
-            /* color: #2c3e50; */
-            color: #e9e8ff;
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 3rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .controls {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
             margin-bottom: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        label {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9rem;
+        }
+
+        input[type="text"],
+        input[type="color"],
+        select {
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="color"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
         }
 
         .color-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin: 2rem 0;
-            transform: rotateX(15deg);
-            animation: scroll-animation 90s linear infinite;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
         }
 
-        .color-grid:nth-child(2) {
-            animation-duration: 60s;
-        }
-
-        .color-grid:nth-child(3) {
-            animation-duration: 30s;
-        }
-
-        @keyframes scroll-animation {
-            0% { transform: translateY(100%) rotateX(15deg); }
-            100% { transform: translateY(-100%) rotateX(15deg); }
-        }
-
-        .color-box {
-            position: relative;
-            height: 150px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
+        .color-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
             cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            padding: 1rem;
-            color: white;
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .color-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .color-preview {
+            width: 100%;
+            height: 180px;
+            position: relative;
             overflow: hidden;
         }
 
-        .color-box::before {
+        .color-preview::after {
             content: '';
             position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 300%;
-            height: 300%;
-            background: rgba(255, 255, 255, 0.1);
-            transition: all 0.5s ease;
-            transform: translate(-50%, -50%) rotate(45deg);
-            opacity: 0;
-        }
-
-        .color-box:hover::before {
-            opacity: 1;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(0, 0, 0, 0.1));
+            pointer-events: none;
         }
 
-        .color-box:hover {
-            transform: scale(1.05);
+        .color-info {
+            padding: 1.5rem;
         }
 
         .color-name {
-            font-size: 1.1em;
-            font-weight: bold;
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: #333;
         }
 
-        .color-hex {
-            font-size: 0.9em;
-            opacity: 0.9;
+        .color-values {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
         }
 
-        .generate-btn {
-            background-color: #3498db;
-            color: white;
-            border: none;
-            padding: 1rem 2rem;
-            border-radius: 25px;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-
-        .generate-btn:hover {
-            background-color: #2980b9;
-        }
-
-        .parallax-wrapper {
-            height: 100vh;
-            overflow-x: hidden;
-            overflow-y: auto;
-            perspective: 10px;
-        }
-
-        .parallax-content {
-            position: relative;
+        .value-item {
+            background: #f5f5f5;
+            padding: 0.75rem;
+            border-radius: 6px;
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
-            height: 100%;
-            transform-style: preserve-3d;
-            z-index: -1;
         }
 
-        .scroll-container {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            transform-style: preserve-3d;
+        .value-label {
+            color: #666;
+            font-weight: 500;
         }
 
-        .scroll-container[data-speed="slow"] {
-            transform: translateZ(2px) scale(0.8);
+        .value-text {
+            color: #333;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
         }
 
-        .scroll-container[data-speed="medium"] {
-            transform: translateZ(5px) scale(0.5);
+        .color-actions {
+            display: flex;
+            gap: 0.5rem;
         }
 
-        .scroll-container[data-speed="fast"] {
-            transform: translateZ(9px) scale(0.2);
+        .btn-small {
+            flex: 1;
+            padding: 0.6rem;
+            font-size: 0.85rem;
+            border: 2px solid #e0e0e0;
+            background: white;
+            color: #667eea;
+            cursor: pointer;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.3s ease;
         }
 
-        .content {
-            position: relative;
-            background: rgba(0, 34, 17, 0.8);
-            padding: 2rem;
-            border-radius: 1rem;
-            z-index: 1;
-            backdrop-filter: blur(5px);
-            margin: 2rem auto;
-            max-width: 800px;
+        .btn-small:hover {
+            border-color: #667eea;
+            background: #f5f7ff;
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.1rem;
+        }
+
+        .error {
+            background: #ff6b6b;
+            color: white;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8rem;
+            }
+
+            .controls {
+                grid-template-columns: 1fr;
+            }
+
+            .color-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Flip.min.js"></script>
 </head>
 
 <body>
-    <div class="parallax-wrapper">
-        <div class="parallax-content">
-            <div class="scroll-container" data-speed="slow">
-                <div class="color-grid">{{colors}}</div>
-            </div>
-            <div class="scroll-container" data-speed="medium">
-                <div class="color-grid">{{colors}}</div>
-            </div>
-            <div class="scroll-container" data-speed="fast">
-                <div class="color-grid">{{colors}}</div>
-            </div>
+    <div class="container">
+        <header>
+            <h1>🎨 Color API</h1>
+            <p>Advanced color exploration and palette generation</p>
+        </header>
 
-            <div class="content">
-                <h1>Color Theme Generator</h1>
-                <p>Create beautiful color palettes for your next project</p>
-                <button class="generate-btn" onclick="generateNewTheme()">
-                    Generate New Theme
-                </button>
-                <div class="color-grid" id="colorGrid">
-                    {{colors}}
-                </div>
+        <div class="controls">
+            <div class="control-group">
+                <label for="colorInput">Enter Color (Hex, RGB, or Name)</label>
+                <input type="text" id="colorInput" placeholder="#667eea or rgb(102, 126, 234)" value="#667eea">
+            </div>
+            <div class="control-group">
+                <label for="paletteMode">Palette Mode</label>
+                <select id="paletteMode">
+                    <option value="analogous">Analogous</option>
+                    <option value="complementary">Complementary</option>
+                    <option value="triadic">Triadic</option>
+                    <option value="tetradic">Tetradic</option>
+                    <option value="shades">Shades</option>
+                    <option value="tints">Tints</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>&nbsp;</label>
+                <button onclick="generatePalette()">Generate Palette</button>
             </div>
         </div>
+
+        <div id="error" class="error" style="display: none;"></div>
+        <div id="loading" class="loading" style="display: none;">Loading...</div>
+        <div id="colorGrid" class="color-grid"></div>
     </div>
 
     <script>
-            // Register Flip plugin
-            gsap.registerPlugin(Flip);
+        async function generatePalette() {
+            const colorInput = document.getElementById('colorInput').value;
+            const mode = document.getElementById('paletteMode').value;
+            const errorDiv = document.getElementById('error');
+            const gridDiv = document.getElementById('colorGrid');
+            const loadingDiv = document.getElementById('loading');
 
-        async function generateNewTheme() {
-            const query = `
-                mutation GenerateTheme {
-                    generateColorTheme {
-                        colors {
-                            hex
-                            name
-                        }
-                    }
-                }
-            `;
+            errorDiv.style.display = 'none';
+            gridDiv.innerHTML = '';
+            loadingDiv.style.display = 'block';
 
-            const response = await fetch('/graphql', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query })
-            });
-
-            const { data } = await response.json();
-            updateColorGrid(data.generateColorTheme.colors);
-        }
-
-        function updateColorGrid(colors) {
-            const grid = document.getElementById('colorGrid');
-            grid.innerHTML = colors.map(color => `
-                <div class="color-box" style="background-color: ${color.hex}" onclick="copyColor('${color.hex}')">
-                    <span class="color-name">${color.name}</span>
-                    <span class="color-hex">${color.hex}</span>
-                </div>
-            `).join('');
-        }
-
-        function copyColor(hex) {
-            navigator.clipboard.writeText(hex);
-            alert(`Copied ${hex} to clipboard!`);
-        }
-
-        // rearrange the color boxes every 7 seconds
-        function scramble() {
             try {
-                const grid = document.getElementById('colorGrid');
-
-                const boxes = Array.from(grid.children);
-
-                if (!boxes.length) return; // Guard clause if no boxes exist
-
-                // Simpler Flip implementation
-                const state = Flip.getState(boxes, {
-                    props: "all"
+                const response = await fetch('/graphql', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: `
+                            query GeneratePalette($color: String!, $mode: String!) {
+                                colorInfo(hex: $color) {
+                                    hex
+                                    rgb
+                                    hsl
+                                    name
+                                }
+                                palette(baseColor: $color, mode: $mode) {
+                                    colors {
+                                        hex
+                                        rgb
+                                        hsl
+                                        name
+                                    }
+                                }
+                            }
+                        `,
+                        variables: { color: colorInput, mode }
+                    })
                 });
 
-                boxes.sort(() => Math.random() - 0.5);
-                boxes.forEach(box => grid.appendChild(box));
+                loadingDiv.style.display = 'none';
+                const { data, errors } = await response.json();
 
-                Flip.from(state, {
-                    yoyo: true,
-                    repeat: -1,
-                    repeatDelay: 3,
-                    duration: 0.7,
-                    ease: "power1.inOut",
-                    stagger: 0.02,
-                    absolute: true,
-                    onComplete: () => console.log('Flip complete')
-                });
+                if (errors) {
+                    errorDiv.textContent = errors[0].message;
+                    errorDiv.style.display = 'block';
+                    return;
+                }
+
+                const colors = data.palette.colors;
+                gridDiv.innerHTML = colors.map(color => `
+                    <div class="color-card">
+                        <div class="color-preview" style="background-color: ${color.hex}"></div>
+                        <div class="color-info">
+                            <div class="color-name">${color.name}</div>
+                            <div class="color-values">
+                                <div class="value-item">
+                                    <span class="value-label">HEX</span>
+                                    <span class="value-text">${color.hex}</span>
+                                </div>
+                                <div class="value-item">
+                                    <span class="value-label">RGB</span>
+                                    <span class="value-text">${color.rgb}</span>
+                                </div>
+                                <div class="value-item">
+                                    <span class="value-label">HSL</span>
+                                    <span class="value-text">${color.hsl}</span>
+                                </div>
+                            </div>
+                            <div class="color-actions">
+                                <button class="btn-small" onclick="copyToClipboard('${color.hex}')">Copy HEX</button>
+                                <button class="btn-small" onclick="copyToClipboard('${color.rgb}')">Copy RGB</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
             } catch (error) {
-                console.error('Scramble animation error:', error);
+                loadingDiv.style.display = 'none';
+                errorDiv.textContent = error.message;
+                errorDiv.style.display = 'block';
             }
         }
 
-            // Initialize after everything is loaded
-            window.addEventListener('load', () => {
-                scramble();
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Copied: ' + text);
             });
+        }
 
-        // Add parallax effect on scroll
-        document.querySelector('.parallax-wrapper').addEventListener('scroll', () => {
-            requestAnimationFrame(() => {
-                const scrolled = document.querySelector('.parallax-wrapper').scrollTop;
-                document.querySelectorAll('.scroll-container').forEach(container => {
-                    const speed = container.dataset.speed;
-                    const yPos = scrolled * (speed === 'slow' ? 0.7 : speed === 'medium' ? 0.5 : 0.3);
-                    container.style.transform = `translateY(${yPos}px) scale(${speed === 'slow' ? 0.8 : speed === 'medium' ? 0.5 : 0.2})`;
-                });
-            });
-        });
+        // Generate palette on page load
+        generatePalette();
     </script>
 </body>
 
