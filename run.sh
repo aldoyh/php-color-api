@@ -14,7 +14,7 @@ if ! [ -x "$(command -v composer)" ]; then
 fi
 
 # run php server on port 8081 if taken then increment
-port=8081
+port=8000
 while true; do
   if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null ; then
     port=$((port+1))

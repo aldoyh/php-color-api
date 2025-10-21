@@ -237,33 +237,190 @@
             <p>Advanced color exploration and palette generation</p>
         </header>
 
-        <div class="controls">
-            <div class="control-group">
-                <label for="colorInput">Enter Color (Hex, RGB, or Name)</label>
-                <input type="text" id="colorInput" placeholder="#667eea or rgb(102, 126, 234)" value="#667eea">
-            </div>
-            <div class="control-group">
-                <label for="paletteMode">Palette Mode</label>
-                <select id="paletteMode">
-                    <option value="analogous">Analogous</option>
-                    <option value="complementary">Complementary</option>
-                    <option value="triadic">Triadic</option>
-                    <option value="tetradic">Tetradic</option>
-                    <option value="shades">Shades</option>
-                    <option value="tints">Tints</option>
-                </select>
-            </div>
-            <div class="control-group">
-                <label>&nbsp;</label>
-                <button onclick="generatePalette()">Generate Palette</button>
-            </div>
+        <div class="generator-row">
+            <section class="controls manual-controls">
+                <h2 class="section-title">🎨 Manual Palette Generator</h2>
+                <div class="control-group">
+                    <label for="colorInput">Enter Color (Hex, RGB, or Name)</label>
+                    <input type="text" id="colorInput" placeholder="#667eea or rgb(102, 126, 234)" value="#667eea">
+                </div>
+                <div class="control-group">
+                    <label for="paletteMode">Palette Mode</label>
+                    <select id="paletteMode">
+                        <option value="analogous">Analogous</option>
+                        <option value="complementary">Complementary</option>
+                        <option value="triadic">Triadic</option>
+                        <option value="tetradic">Tetradic</option>
+                        <option value="shades">Shades</option>
+                        <option value="tints">Tints</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>&nbsp;</label>
+                    <button onclick="generatePalette()">Generate Palette</button>
+                </div>
+            </section>
+            <section class="ai-theme-card">
+                <h2 class="ai-theme-title">✨ AI Color Theme Generator</h2>
+                <div class="ai-theme-row">
+                    <input type="text" id="aiPrompt" class="ai-theme-input"
+                        placeholder="Describe your theme (e.g. Modern dashboard, pastel spring, dark mode...)" />
+                    <button id="aiGenerateBtn" class="ai-theme-btn" onclick="generateAITheme()">Generate with
+                        AI</button>
+                </div>
+                <div class="ai-theme-desc">Let AI create a beautiful palette for your project. Powered by Ollama LLM.
+                </div>
+            </section>
         </div>
 
         <div id="error" class="error" style="display: none;"></div>
         <div id="loading" class="loading" style="display: none;">Loading...</div>
+        <div id="magicStars"></div>
         <div id="colorGrid" class="color-grid"></div>
     </div>
+        <script>
+        async function generatePalette() {
+            const colorInput = document.getElementById('colorInput').value;
+            const mode = document.getElementById('paletteMode').value;
+            const errorDiv = document.getElementById('error');
+            const gridDiv = document.getElementById('colorGrid');
+            const loadingDiv = document.getElementById('loading');
 
+            errorDiv.style.display = 'none';
+            gridDiv.innerHTML = '';
+            loadingDiv.style.display = 'block';
+
+            try {
+                const response = await fetch('/graphql', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: `
+                            query GeneratePalette($color: String!, $mode: String!) {
+                                colorInfo(hex: $color) {
+                                    hex
+                                    rgb
+                                    hsl
+                                    name
+                                }
+                                palette(baseColor: $color, mode: $mode) {
+                                    colors {
+                                        hex
+                                        rgb
+                                        hsl
+                                        name
+                                    }
+                                }
+                            }
+                        `,
+                        variables: { color: colorInput, mode }
+                    })
+                });
+
+                const { data, errors } = await response.json();
+                loadingDiv.style.display = 'none';
+
+                if (errors) {
+                    errorDiv.textContent = errors[0].message;
+                    errorDiv.style.display = 'block';
+                    return;
+                }
+
+                const colors = data.palette.colors;
+                gridDiv.innerHTML = colors.map(color => `
+                    <div class="color-card">
+                        <div class="color-preview" style="background-color: ${color.hex}"></div>
+                        <div class="color-info">
+                            <div class="color-name">${color.name}</div>
+                            <div class="color-values">
+                                <div class="value-item">
+                                    <span class="value-label">HEX</span>
+                                    <span class="value-text">${color.hex}</span>
+                                </div>
+                                <div class="value-item">
+                                    <span class="value-label">RGB</span>
+                                    <span class="value-text">${color.rgb}</span>
+                                </div>
+                                <div class="value-item">
+                                    <span class="value-label">HSL</span>
+                                    <span class="value-text">${color.hsl}</span>
+                                </div>
+                            </div>
+                            <div class="color-actions">
+                                <button class="btn-small" onclick="copyToClipboard('${color.hex}')">Copy HEX</button>
+                                <button class="btn-small" onclick="copyToClipboard('${color.rgb}')">Copy RGB</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                loadingDiv.style.display = 'none';
+                errorDiv.textContent = error.message;
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        async function generateAITheme() {
+            const prompt = document.getElementById('aiPrompt').value.trim();
+            const errorDiv = document.getElementById('error');
+            const gridDiv = document.getElementById('colorGrid');
+            const loadingDiv = document.getElementById('loading');
+            errorDiv.style.display = 'none';
+            gridDiv.innerHTML = '';
+            loadingDiv.style.display = 'block';
+            showMagicStars();
+            try {
+                const response = await fetch('/graphql', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        query: `query($prompt: String!) { generateTheme(prompt: $prompt) { hex rgb hsl name } }`,
+                        variables: { prompt }
+                    })
+                });
+                const { data, errors } = await response.json();
+                loadingDiv.style.display = 'none';
+                if (errors) {
+                    errorDiv.textContent = errors[0].message;
+                    errorDiv.style.display = 'block';
+                    return;
+                }
+                const colors = data.generateTheme;
+                gridDiv.innerHTML = colors.map(color => `
+                    <div class="color-card">
+                        <div class="color-preview" style="background-color: ${color.hex}"></div>
+                        <div class="color-info">
+                            <div class="color-name">${color.name}</div>
+                            <div class="color-values">
+                                <div class="value-item"><span class="value-label">HEX</span><span class="value-text">${color.hex}</span></div>
+                                <div class="value-item"><span class="value-label">RGB</span><span class="value-text">${color.rgb}</span></div>
+                                <div class="value-item"><span class="value-label">HSL</span><span class="value-text">${color.hsl}</span></div>
+                            </div>
+                            <div class="color-actions">
+                                <button class="btn-small" onclick="copyToClipboard('${color.hex}')">Copy HEX</button>
+                                <button class="btn-small" onclick="copyToClipboard('${color.rgb}')">Copy RGB</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                loadingDiv.style.display = 'none';
+                errorDiv.textContent = error.message;
+                errorDiv.style.display = 'block';
+            }
+        }
+        // Dummy showMagicStars and copyToClipboard for completeness
+        function showMagicStars() {
+            // Animation logic here (if any)
+        }
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Copied: ' + text);
+            });
+        }
+        // Generate palette on page load
+        generatePalette();
+        </script>
     <script>
         async function generatePalette() {
             const colorInput = document.getElementById('colorInput').value;
@@ -318,36 +475,82 @@
                         <div class="color-preview" style="background-color: ${color.hex}"></div>
                         <div class="color-info">
                             <div class="color-name">${color.name}</div>
-                            <div class="color-values">
-                                <div class="value-item">
-                                    <span class="value-label">HEX</span>
-                                    <span class="value-text">${color.hex}</span>
-                                </div>
-                                <div class="value-item">
-                                    <span class="value-label">RGB</span>
-                                    <span class="value-text">${color.rgb}</span>
-                                </div>
-                                <div class="value-item">
-                                    <span class="value-label">HSL</span>
-                                    <span class="value-text">${color.hsl}</span>
-                                </div>
-                            </div>
-                            <div class="color-actions">
-                                <button class="btn-small" onclick="copyToClipboard('${color.hex}')">Copy HEX</button>
-                                <button class="btn-small" onclick="copyToClipboard('${color.rgb}')">Copy RGB</button>
-                            </div>
+
+                    <div class="controls" style="margin-top:1.5rem; background:linear-gradient(90deg,#fffbe6,#ffe066,#ffd700,#fffbe6); box-shadow:0 2px 24px rgba(255,220,80,0.12);">
+                        <div class="control-group">
+                            <label for="aiPrompt">AI Theme Prompt</label>
+                            <input type="text" id="aiPrompt" placeholder="e.g. Modern dashboard, pastel spring, dark mode...">
                         </div>
-                    </div>
-                `).join('');
-            } catch (error) {
-                loadingDiv.style.display = 'none';
-                errorDiv.textContent = error.message;
-                errorDiv.style.display = 'block';
+                        <div class="control-group">
+                            <label>&nbsp;</label>
+                            <button id="aiGenerateBtn" onclick="generateAITheme()" style="background: linear-gradient(90deg,#ffb347,#ffcc33,#f7b42c,#ffd700); color: #333; position:relative; overflow:hidden; font-size:1.1rem;">✨ Generate with AI</button>
+                        </div>
+                            <div class="color-values">
+                                <div class="generator-row">
+                                    <section class="controls manual-controls">
+                                        <h2 class="section-title">🎨 Manual Palette Generator</h2>
+                                        <div class="control-group">
+                                            <label for="colorInput">Enter Color (Hex, RGB, or Name)</label>
+                                            <input type="text" id="colorInput" placeholder="#667eea or rgb(102, 126, 234)" value="#667eea">
+                                        </div>
+                                        <div class="control-group">
+                                            <label for="paletteMode">Palette Mode</label>
+                                            <select id="paletteMode">
+                                                <option value="analogous">Analogous</option>
+                                                <option value="complementary">Complementary</option>
+                                                <option value="triadic">Triadic</option>
+                                                <option value="tetradic">Tetradic</option>
+                                                <option value="shades">Shades</option>
+                                                <option value="tints">Tints</option>
+                                            </select>
+                                        </div>
+                                        <div class="control-group">
+                                            <label>&nbsp;</label>
+                                            <button onclick="generatePalette()">Generate Palette</button>
+                                        </div>
+                                    </section>
+                                    <section class="ai-theme-card">
+                                        <h2 class="ai-theme-title">✨ AI Color Theme Generator</h2>
+                                        <div class="ai-theme-row">
+                                            <input type="text" id="aiPrompt" class="ai-theme-input" placeholder="Describe your theme (e.g. Modern dashboard, pastel spring, dark mode...)" />
+                                            <button id="aiGenerateBtn" class="ai-theme-btn" onclick="generateAITheme()">Generate with AI</button>
+                                        </div>
+                                        <div class="ai-theme-desc">Let AI create a beautiful palette for your project. Powered by Ollama LLM.</div>
+                                    </section>
+                                </div>
+        <style>
+        .generator-row {
+            display: flex;
+            gap: 2.5rem;
+            justify-content: center;
+            align-items: flex-start;
+            margin-bottom: 2.5rem;
+            flex-wrap: wrap;
+        }
+        .manual-controls, .ai-theme-card {
+            flex: 1 1 350px;
+            min-width: 320px;
+            max-width: 480px;
+        }
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 1.2rem;
+            letter-spacing: 0.01em;
+            text-align: center;
+        }
+        @media (max-width: 900px) {
+            .generator-row {
+                flex-direction: column;
+                gap: 1.5rem;
+                align-items: stretch;
+            }
+            .manual-controls, .ai-theme-card {
+                max-width: 100%;
             }
         }
-
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
+        </style>
                 alert('Copied: ' + text);
             });
         }

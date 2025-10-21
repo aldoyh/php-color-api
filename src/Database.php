@@ -69,6 +69,7 @@ class Database
         $pdo = self::getConnection();
         $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
 
+        // Colors table
         if ($driver === 'sqlite') {
             $sql = "CREATE TABLE IF NOT EXISTS colors (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -89,8 +90,27 @@ class Database
                 created DATETIME DEFAULT CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
         }
-
         $pdo->exec($sql);
+
+        // AI themes table
+        if ($driver === 'sqlite') {
+            $sql2 = "CREATE TABLE IF NOT EXISTS ai_themes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                prompt TEXT NOT NULL,
+                model TEXT,
+                colors_json TEXT NOT NULL,
+                created DATETIME DEFAULT CURRENT_TIMESTAMP
+            )";
+        } else {
+            $sql2 = "CREATE TABLE IF NOT EXISTS ai_themes (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                prompt TEXT NOT NULL,
+                model VARCHAR(255),
+                colors_json TEXT NOT NULL,
+                created DATETIME DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+        }
+        $pdo->exec($sql2);
 
         // seed default colors if table empty
         try {
