@@ -104,7 +104,13 @@ $queryType = new ObjectType([
                 $prompt = "You are a world-class color palette designer. Generate a JSON array of 5-7 beautiful, visually harmonious color hex codes for this theme: '" . $userPrompt . "'. Only output the array, no explanation.";
                 $ollama = new \Frontify\ColorApi\OllamaClient('http://localhost:11434/api/generate', $model);
                 $utils = new ColorUtils();
-                $output = $ollama->generateTheme($prompt);
+                try {
+                    $output = $ollama->generateTheme($prompt);
+                } catch (\Exception $e) {
+                    // Provide a helpful error message to the client and log details
+                    error_log('Ollama generation error: ' . $e->getMessage());
+                    throw new \Exception('AI generation failed: ' . $e->getMessage());
+                }
                 // Try to extract JSON array of hex codes first
                 $hexes = [];
                 if (preg_match('/\[([^\]]+)\]/', $output, $jsonMatch)) {
@@ -131,13 +137,19 @@ $queryType = new ObjectType([
                 if (empty($colors)) {
                     throw new \Exception('No valid colors found in AI output.');
                 }
-                $pdo = getDatabase();
-                $stmt = $pdo->prepare('INSERT INTO ai_themes (prompt, model, colors_json) VALUES (:prompt, :model, :colors_json)');
-                $stmt->execute([
-                    ':prompt' => $userPrompt,
-                    ':model' => $model,
-                    ':colors_json' => json_encode($colors)
-                ]);
+                // Try to persist generated theme, but don't fail the request if DB write errors
+                try {
+                    $pdo = getDatabase();
+                    $stmt = $pdo->prepare('INSERT INTO ai_themes (prompt, model, colors_json) VALUES (:prompt, :model, :colors_json)');
+                    $stmt->execute([
+                        ':prompt' => $userPrompt,
+                        ':model' => $model,
+                        ':colors_json' => json_encode($colors)
+                    ]);
+                } catch (\Exception $e) {
+                    error_log('Failed to save AI theme: ' . $e->getMessage());
+                    // continue and return colors despite DB failure
+                }
                 return $colors;
             }
         ],

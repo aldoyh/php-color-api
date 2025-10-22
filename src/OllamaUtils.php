@@ -30,4 +30,32 @@ class OllamaUtils
         }
         return false;
     }
+
+    /**
+     * Return an array of available model names from Ollama (or empty array on failure)
+     * @param string $endpoint
+     * @return array
+     */
+    public static function getAvailableModels($endpoint = 'http://localhost:11434/api/tags') : array
+    {
+        $ch = curl_init($endpoint);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 4);
+        $response = curl_exec($ch);
+        if ($response === false) {
+            error_log('OllamaUtils::getAvailableModels curl error: ' . curl_error($ch));
+            return [];
+        }
+        curl_close($ch);
+        $json = json_decode($response, true);
+        if (!isset($json['models']) || !is_array($json['models'])) {
+            return [];
+        }
+        $names = [];
+        foreach ($json['models'] as $m) {
+            if (isset($m['name'])) $names[] = $m['name'];
+        }
+        return $names;
+    }
 }
